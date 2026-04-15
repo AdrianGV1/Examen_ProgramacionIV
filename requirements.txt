@@ -1,0 +1,6 @@
+flask
+flask-openapi3
+flask-sqlalchemy
+flask-migrate
+pydantic[email]
+python-dotenv
