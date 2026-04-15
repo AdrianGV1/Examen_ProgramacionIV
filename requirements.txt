@@ -2,5 +2,6 @@ flask
 flask-openapi3
 flask-sqlalchemy
 flask-migrate
+flask-jwt-extended
 pydantic[email]
 python-dotenv
