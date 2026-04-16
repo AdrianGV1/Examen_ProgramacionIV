@@ -18,6 +18,8 @@ API_INFO = Info(
 TAG_AUTH = Tag(name="Auth", description="Autenticación con Google SSO y manejo de JWT.")
 TAG_RADIOGRAPHS = Tag(name="Radiographs", description="CRUD de placas radiográficas de pacientes.")
 TAG_USERS = Tag(name="Users", description="Información del usuario autenticado.")
+TAG_UPLOADS = Tag(name="Uploads", description="Subida y eliminación de imágenes en Cloudinary.")
+TAG_UPLOADS = Tag(name="Uploads", description="Subida y eliminación de imágenes en Cloudinary.")
 
 SECURITY_SCHEMES = {
     "BearerAuth": {

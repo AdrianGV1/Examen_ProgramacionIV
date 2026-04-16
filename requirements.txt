@@ -5,3 +5,4 @@ flask-migrate
 flask-jwt-extended
 pydantic[email]
 python-dotenv
+cloudinary

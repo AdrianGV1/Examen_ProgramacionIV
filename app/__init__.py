@@ -19,8 +19,10 @@ def create_app():
     migrate.init_app(app, db)
 
     from app.routers.records import records_bp
+    from app.routers.upload_router import uploads_bp
     from app.routers.users import users_bp
     app.register_blueprint(records_bp, url_prefix="/api/v1")
+    app.register_api(uploads_bp, url_prefix="/api/v1")
     app.register_blueprint(users_bp, url_prefix="/api/v1")
 
     return app
