@@ -4,15 +4,41 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# ========================
+# Base de Datos
+# ========================
 SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///app.db")
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-SECRET_KEY = os.getenv("SECRET_KEY", "cambiar esto después")
+# ========================
+# Flask & Seguridad
+# ========================
+SECRET_KEY = os.getenv("SECRET_KEY", "cambiar-esto-después")
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
+# ========================
+# Google OAuth (Flask-Dance)
+# ========================
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+
+# ========================
+# JWT (PyJWT)
+# ========================
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", SECRET_KEY)
+JWT_ALGORITHM = "HS256"
+JWT_ACCESS_TOKEN_EXPIRES_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_MINUTES", "60"))
+
+# ========================
+# Cloudinary
+# ========================
 CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME", "")
 CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY", "")
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET", "")
 
+# ========================
+# Upload de Archivos
+# ========================
 UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "radiografias")
 UPLOAD_MAX_FILE_SIZE_MB = int(os.getenv("UPLOAD_MAX_FILE_SIZE_MB", "5"))
 UPLOAD_MAX_FILE_SIZE_BYTES = UPLOAD_MAX_FILE_SIZE_MB * 1024 * 1024
