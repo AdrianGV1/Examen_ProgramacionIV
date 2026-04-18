@@ -1,6 +1,6 @@
 from flask import jsonify, request
 from flask_openapi3 import APIBlueprint
-from flask_jwt_extended import jwt_required
+from app.utils.auth_decorators import require_jwt
 
 from app.config_swagger import TAG_UPLOADS
 from app.schemas.errors import ErrorCodes
@@ -18,7 +18,7 @@ uploads_bp = APIBlueprint("uploads", __name__, url_prefix="/uploads")
     description="Sube una imagen radiografica a Cloudinary",
     tags=[TAG_UPLOADS],
 )
-@jwt_required()
+@require_jwt
 def upload_image():
     """Sube una imagen radiografica a Cloudinary.
 
@@ -66,7 +66,7 @@ def upload_image():
     description="Elimina una imagen en Cloudinary por public_id",
     tags=[TAG_UPLOADS],
 )
-@jwt_required()
+@require_jwt
 def delete_image(public_id: str):
     """Elimina una imagen en Cloudinary por public_id."""
     try:

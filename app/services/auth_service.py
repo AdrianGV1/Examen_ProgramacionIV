@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import jwt
-from flask_jwt_extended import create_access_token
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
 from werkzeug.exceptions import BadRequest, Unauthorized
@@ -14,6 +13,7 @@ from app import config
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import UserInfoResponse
+from app.services.jwt_service import JWTService
 
 
 class AuthServiceError(Exception):
@@ -111,25 +111,25 @@ class AuthService:
 		return user
 
 	@staticmethod
-	def generate_jwt(user_id: int) -> dict:
+	def generate_jwt(user_id: int, email: str) -> dict:
 		"""
 		Genera un JWT para el usuario.
 		
 		Args:
 			user_id: ID del usuario
+			email: Email del usuario
 			
 		Returns:
 			dict: {"access_token": "...", "token_type": "bearer"}
 		"""
-		try:
-			access_token = create_access_token(
-				identity=user_id,
-				expires_delta=timedelta(seconds=config.JWT_ACCESS_TOKEN_EXPIRES)
-			)
+		if not email or not email.strip():
+			raise AuthServiceError("Email es requerido para generar JWT", 400)
 
+		try:
+			token_data = JWTService.generate_access_token(user_id, email)
 			return {
-				"access_token": access_token,
-				"token_type": "bearer",
+				"access_token": token_data["access_token"],
+				"token_type": token_data["token_type"].lower(),
 			}
 		except Exception as exc:
 			raise AuthServiceError("Error generando token JWT", 500) from exc

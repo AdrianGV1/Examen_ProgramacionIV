@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
+from app.utils.auth_decorators import require_jwt
 from pydantic import ValidationError
 from werkzeug.exceptions import NotFound
 
@@ -17,7 +17,7 @@ def get_db():
 
 
 @users_bp.post("")
-@jwt_required()
+@require_jwt
 def create_user():
 	"""Crea un nuevo usuario."""
 	try:
@@ -33,7 +33,7 @@ def create_user():
 
 
 @users_bp.get("")
-@jwt_required()
+@require_jwt
 def list_users():
 	"""Lista usuarios con paginacion, filtros y ordenamiento."""
 	try:
@@ -60,7 +60,7 @@ def list_users():
 
 
 @users_bp.get("/<int:record_id>")
-@jwt_required()
+@require_jwt
 def get_user(record_id: int):
 	"""Obtiene un usuario por su identificador."""
 	try:
@@ -73,7 +73,7 @@ def get_user(record_id: int):
 
 
 @users_bp.put("/<int:record_id>")
-@jwt_required()
+@require_jwt
 def update_user(record_id: int):
 	"""Actualiza un usuario existente."""
 	try:
@@ -91,7 +91,7 @@ def update_user(record_id: int):
 
 
 @users_bp.delete("/<int:record_id>")
-@jwt_required()
+@require_jwt
 def delete_user(record_id: int):
 	"""Elimina un usuario por su identificador."""
 	try:

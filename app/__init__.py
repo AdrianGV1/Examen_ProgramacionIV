@@ -61,9 +61,9 @@ def create_app():
     # Registrar google blueprint de Flask-Dance en /auth/google
     app.register_blueprint(google_bp, url_prefix="/auth")
 
-    # Registrar otros blueprints en /api/v1
-    app.register_blueprint(records_bp, url_prefix="/api/v1")
-    app.register_api(uploads_bp, url_prefix="/api/v1")
-    app.register_blueprint(users_bp, url_prefix="/api/v1")
+    # Registrar otros blueprints bajo /api/v1 con su subruta propia
+    app.register_blueprint(records_bp, url_prefix="/api/v1/records")
+    app.register_api(uploads_bp, url_prefix="/api/v1/uploads")
+    app.register_blueprint(users_bp, url_prefix="/api/v1/users")
 
     return app

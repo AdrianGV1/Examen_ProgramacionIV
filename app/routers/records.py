@@ -1,7 +1,7 @@
 from datetime import date
 
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
+from app.utils.auth_decorators import require_jwt
 from pydantic import ValidationError
 from werkzeug.exceptions import NotFound
 
@@ -28,7 +28,7 @@ def _parse_iso_date(value: str | None, field_name: str):
 
 
 @records_bp.post("")
-@jwt_required()
+@require_jwt
 def create_record():
     """Crea un nuevo registro radiografico."""
     try:
@@ -44,7 +44,7 @@ def create_record():
 
 
 @records_bp.get("")
-@jwt_required()
+@require_jwt
 def list_records():
     """Lista registros radiograficos con paginacion, filtros y ordenamiento."""
     try:
@@ -84,7 +84,7 @@ def list_records():
 
 
 @records_bp.get("/<int:record_id>")
-@jwt_required()
+@require_jwt
 def get_record(record_id: int):
     """Obtiene un registro radiografico por su identificador."""
     try:
@@ -97,7 +97,7 @@ def get_record(record_id: int):
 
 
 @records_bp.put("/<int:record_id>")
-@jwt_required()
+@require_jwt
 def update_record(record_id: int):
     """Actualiza parcialmente un registro radiografico."""
     try:
@@ -115,7 +115,7 @@ def update_record(record_id: int):
 
 
 @records_bp.delete("/<int:record_id>")
-@jwt_required()
+@require_jwt
 def delete_record(record_id: int):
     """Elimina un registro radiografico por su identificador."""
     try:
