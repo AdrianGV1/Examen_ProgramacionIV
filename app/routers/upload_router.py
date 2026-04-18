@@ -67,9 +67,16 @@ def upload_image():
     tags=[TAG_UPLOADS],
 )
 @require_jwt
-def delete_image(public_id: str):
+def delete_image(public_id: str | None = None):
     """Elimina una imagen en Cloudinary por public_id."""
     try:
+        # flask-openapi3 puede no pasar public_id como argumento posicional.
+        # En ese caso, lo tomamos desde view_args del request.
+        if public_id is None:
+            public_id = (request.view_args or {}).get("public_id")
+        if not public_id:
+            return jsonify({"error": ErrorCodes.VALIDATION_ERROR, "message": "public_id es requerido"}), 400
+
         deleted = UploadService.delete_image(public_id)
         if not deleted:
             return jsonify({"error": ErrorCodes.NOT_FOUND, "message": "Imagen no encontrada en Cloudinary"}), 404
