@@ -33,6 +33,11 @@ class RadiographCreate(BaseModel):
         description="Fecha en que se realizó el estudio (YYYY-MM-DD).",
         example="2026-04-10",
     )
+    image_url: str | None = Field(
+        default=None,
+        description="URL pública de la imagen en Cloudinary (opcional).",
+        example="https://res.cloudinary.com/demo/image/upload/v1234567890/radiograph_1.jpg",
+    )
 
     @field_validator("patient_name")
     @classmethod
@@ -62,6 +67,7 @@ class RadiographCreate(BaseModel):
                 "patient_id_number": "1-1034-0578",
                 "clinical_reference": "Radiografía de tórax. Sospecha de neumonía en lóbulo inferior derecho.",
                 "study_date": "2026-04-10",
+                    "image_url": "https://res.cloudinary.com/demo/image/upload/v1234567890/radiograph_1.jpg",
             }
         }
     }
@@ -95,6 +101,11 @@ class RadiographUpdate(BaseModel):
         description="Fecha del estudio (YYYY-MM-DD).",
         example="2026-04-15",
     )
+    image_url: Optional[str] = Field(
+        default=None,
+        description="URL pública de la imagen en Cloudinary.",
+        example="https://res.cloudinary.com/demo/image/upload/v1234567890/radiograph_1.jpg",
+    )
 
     @field_validator("patient_name")
     @classmethod
@@ -108,6 +119,7 @@ class RadiographUpdate(BaseModel):
             "example": {
                 "clinical_reference": "Seguimiento post-tratamiento. Mejora visible en lóbulo inferior.",
                 "study_date": "2026-04-15",
+                    "image_url": "https://res.cloudinary.com/demo/image/upload/v1234567890/radiograph_1.jpg",
             }
         }
     }

@@ -30,7 +30,8 @@ class RadiographService:
 		if missing_fields:
 			raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
 
-		record = RadiographRepository.create(db, payload.model_dump())
+		create_data = payload.model_dump(exclude_unset=True)
+		record = RadiographRepository.create(db, create_data)
 		return RadiographResponse.model_validate(record)
 
 	@staticmethod
