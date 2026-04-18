@@ -2,13 +2,8 @@
 Servicio de Autenticación con Google SSO y JWT
 """
 from datetime import datetime, timedelta
-from typing import Optional
-
-import jwt
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
-from werkzeug.exceptions import BadRequest, Unauthorized
-
 from app import config
 from app.models.user import User
 from app.repositories.user_repository import UserRepository

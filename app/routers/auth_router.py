@@ -9,8 +9,7 @@ Endpoints:
 from flask import Blueprint, redirect, url_for, jsonify, request
 from flask_dance.contrib.google import google, make_google_blueprint
 from app.extensions import db
-from app.services.jwt_service import JWTService
-from app.services.user_oauth_service import UserOAuthService
+from app.services.auth_service import AuthService
 from app.utils.auth_decorators import require_jwt
 from app.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 
@@ -65,15 +64,18 @@ def callback():
 				"message": "Email not verified by Google"
 			}), 401
 		
-		# Crear o actualizar usuario
-		user = UserOAuthService.get_or_create_user(
-			email=email,
-			name=name,
-			picture=picture
+		# Crear o actualizar usuario (servicio de auth)
+		user = AuthService.get_or_create_user(
+			db.session,
+			{
+				"email": email,
+				"name": name,
+				"picture": picture,
+			},
 		)
-		
-		# Generar JWT
-		token_data = JWTService.generate_access_token(user.id, user.email)
+
+		# Generar JWT con servicio centralizado
+		token_data = AuthService.generate_jwt(user.id, user.email)
 		
 		return jsonify(token_data), 200
 	
