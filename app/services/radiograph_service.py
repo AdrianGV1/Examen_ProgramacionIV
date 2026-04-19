@@ -1,3 +1,4 @@
+from datetime import datetime
 from math import ceil
 
 from werkzeug.exceptions import NotFound
@@ -12,6 +13,19 @@ from app.schemas.radiograph import (
 
 
 class RadiographService:
+	@staticmethod
+	def _normalize_image_visibility(data: dict) -> dict:
+		if "image_hidden_at" in data and data.get("image_hidden_at") is not None and "image_is_private" not in data:
+			data["image_is_private"] = True
+
+		if "image_is_private" in data:
+			if data.get("image_is_private") is True and data.get("image_hidden_at") is None:
+				data["image_hidden_at"] = datetime.utcnow()
+			elif data.get("image_is_private") is False:
+				data["image_hidden_at"] = None
+
+		return data
+
 	@staticmethod
 	def create_record(db, payload: RadiographCreate) -> RadiographResponse:
 		required_fields = (
@@ -31,6 +45,7 @@ class RadiographService:
 			raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
 
 		create_data = payload.model_dump(exclude_unset=True)
+		create_data = RadiographService._normalize_image_visibility(create_data)
 		record = RadiographRepository.create(db, create_data)
 		return RadiographResponse.model_validate(record)
 
@@ -83,6 +98,7 @@ class RadiographService:
 	@staticmethod
 	def update_record(db, record_id: int, payload: RadiographUpdate) -> RadiographResponse:
 		update_data = payload.model_dump(exclude_unset=True)
+		update_data = RadiographService._normalize_image_visibility(update_data)
 		record = RadiographRepository.update(db, record_id, update_data)
 		if record is None:
 			raise NotFound(description="Radiograph record not found")

@@ -38,6 +38,21 @@ class RadiographCreate(BaseModel):
         description="URL pública de la imagen en Cloudinary (opcional).",
         example="https://res.cloudinary.com/demo/image/upload/v1234567890/radiograph_1.jpg",
     )
+    image_public_id: str | None = Field(
+        default=None,
+        description="Public ID de Cloudinary para gestionar la imagen.",
+        example="radiografias/radiograph_1",
+    )
+    image_is_private: bool = Field(
+        default=False,
+        description="Indica si la imagen está marcada como privada/oculta.",
+        example=False,
+    )
+    image_hidden_at: datetime | None = Field(
+        default=None,
+        description="Fecha y hora en que la imagen fue ocultada.",
+        example="2026-04-18T15:20:00",
+    )
 
     @field_validator("patient_name")
     @classmethod
@@ -67,7 +82,10 @@ class RadiographCreate(BaseModel):
                 "patient_id_number": "1-1034-0578",
                 "clinical_reference": "Radiografía de tórax. Sospecha de neumonía en lóbulo inferior derecho.",
                 "study_date": "2026-04-10",
-                    "image_url": "https://res.cloudinary.com/demo/image/upload/v1234567890/radiograph_1.jpg",
+                "image_url": "https://res.cloudinary.com/demo/image/upload/v1234567890/radiograph_1.jpg",
+                "image_public_id": "radiografias/radiograph_1",
+                "image_is_private": False,
+                "image_hidden_at": None,
             }
         }
     }
@@ -106,6 +124,21 @@ class RadiographUpdate(BaseModel):
         description="URL pública de la imagen en Cloudinary.",
         example="https://res.cloudinary.com/demo/image/upload/v1234567890/radiograph_1.jpg",
     )
+    image_public_id: Optional[str] = Field(
+        default=None,
+        description="Public ID de Cloudinary asociado a la imagen.",
+        example="radiografias/radiograph_1",
+    )
+    image_is_private: Optional[bool] = Field(
+        default=None,
+        description="Marca la imagen como privada/oculta.",
+        example=True,
+    )
+    image_hidden_at: Optional[datetime] = Field(
+        default=None,
+        description="Fecha y hora en que se ocultó la imagen.",
+        example="2026-04-18T15:20:00",
+    )
 
     @field_validator("patient_name")
     @classmethod
@@ -119,7 +152,10 @@ class RadiographUpdate(BaseModel):
             "example": {
                 "clinical_reference": "Seguimiento post-tratamiento. Mejora visible en lóbulo inferior.",
                 "study_date": "2026-04-15",
-                    "image_url": "https://res.cloudinary.com/demo/image/upload/v1234567890/radiograph_1.jpg",
+                "image_url": "https://res.cloudinary.com/demo/image/upload/v1234567890/radiograph_1.jpg",
+                "image_public_id": "radiografias/radiograph_1",
+                "image_is_private": True,
+                "image_hidden_at": "2026-04-18T15:20:00",
             }
         }
     }
@@ -142,6 +178,21 @@ class RadiographResponse(BaseModel):
         description="URL pública de la imagen en Cloudinary (CDN).",
         example="https://res.cloudinary.com/demo/image/upload/v1234567890/radiograph_1.jpg",
     )
+    image_public_id: str | None = Field(
+        default=None,
+        description="Public ID de Cloudinary para la imagen.",
+        example="radiografias/radiograph_1",
+    )
+    image_is_private: bool = Field(
+        ...,
+        description="Indica si la imagen está privada/oculta.",
+        example=False,
+    )
+    image_hidden_at: datetime | None = Field(
+        default=None,
+        description="Fecha y hora en que la imagen fue ocultada.",
+        example="2026-04-18T15:20:00",
+    )
     created_at: datetime = Field(..., description="Fecha y hora de creación del registro.")
     updated_at: datetime = Field(..., description="Fecha y hora de la última actualización.")
 
@@ -155,6 +206,9 @@ class RadiographResponse(BaseModel):
                 "clinical_reference": "Radiografía de tórax. Sospecha de neumonía en lóbulo inferior derecho.",
                 "study_date": "2026-04-10",
                 "image_url": "https://res.cloudinary.com/demo/image/upload/v1234567890/radiograph_1.jpg",
+                "image_public_id": "radiografias/radiograph_1",
+                "image_is_private": False,
+                "image_hidden_at": None,
                 "created_at": "2026-04-14T10:30:00",
                 "updated_at": "2026-04-14T10:30:00",
             }
@@ -182,6 +236,9 @@ class RadiographListResponse(BaseModel):
                         "clinical_reference": "Radiografía de tórax.",
                         "study_date": "2026-04-10",
                         "image_url": "https://res.cloudinary.com/demo/image/upload/v1234567890/radiograph_1.jpg",
+                        "image_public_id": "radiografias/radiograph_1",
+                        "image_is_private": False,
+                        "image_hidden_at": None,
                         "created_at": "2026-04-14T10:30:00",
                         "updated_at": "2026-04-14T10:30:00",
                     }

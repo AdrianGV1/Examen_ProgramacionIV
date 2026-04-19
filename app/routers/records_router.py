@@ -73,7 +73,8 @@ def _parse_iso_date(value: str | None, field_name: str):
     summary="Crear una nueva placa radiográfica",
     description=(
         "Crea un nuevo registro de placa radiográfica con los datos del paciente. "
-        "La imagen se asocia en un request separado mediante `/upload`."
+        "Permite asociar metadata de Cloudinary (`image_public_id`) y visibilidad "
+        "(`image_is_private`, `image_hidden_at`)."
     ),
     responses={
         201: RadiographResponse,
@@ -172,7 +173,8 @@ def get_record(path: RecordPath):
     summary="Actualizar una placa radiográfica",
     description=(
         "Actualiza uno o más campos del registro. "
-        "Solo es necesario enviar los campos que se desean modificar."
+        "Solo es necesario enviar los campos que se desean modificar, incluyendo "
+        "metadata de imagen y estado de privacidad."
     ),
     responses={
         200: RadiographResponse,

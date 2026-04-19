@@ -12,6 +12,9 @@ class Radiograph(db.Model):
 	clinical_reference = db.Column(db.String(255), nullable=False)
 	study_date = db.Column(db.Date, nullable=False)
 	image_url = db.Column(db.String(500), nullable=True)
+	image_public_id = db.Column(db.String(255), nullable=True)
+	image_is_private = db.Column(db.Boolean, nullable=False, default=False)
+	image_hidden_at = db.Column(db.DateTime, nullable=True)
 	created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 	updated_at = db.Column(
 		db.DateTime,
