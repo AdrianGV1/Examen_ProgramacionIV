@@ -1,101 +1,73 @@
-"""
-Router de Autenticación con Google OAuth + JWT.
-
-Endpoints:
-- GET /auth/login - Inicia login con Google
-- GET /auth/callback - Callback después de autorizar en Google
-- GET /auth/me - Información del usuario autenticado (requiere JWT)
-"""
-from flask import Blueprint, redirect, url_for, jsonify, request
+from flask import redirect, url_for, request
+from flask_openapi3 import APIBlueprint
 from flask_dance.contrib.google import google, make_google_blueprint
+
 from app.extensions import db
 from app.services.auth_service import AuthService
 from app.utils.auth_decorators import require_jwt
 from app.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+from app.schemas import TokenResponse, UserInfoResponse, ErrorResponse
+from flask_openapi3 import APIBlueprint, Tag
 
-# Crear blueprint de autenticación
-auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+auth_bp = APIBlueprint(
+    "auth",
+    __name__,
+    url_prefix="/auth",
+    abp_tags=[Tag(name="Auth")],
+)
 
-# Configurar Flask-Dance para Google OAuth
 def create_google_blueprint():
-	"""Crea y retorna el blueprint de Google OAuth."""
-	return make_google_blueprint(
-		client_id=GOOGLE_CLIENT_ID,
-		client_secret=GOOGLE_CLIENT_SECRET,
-		scope=["openid", "email", "profile"],
-		redirect_to="auth.callback"
-	)
+    return make_google_blueprint(
+        client_id=GOOGLE_CLIENT_ID,
+        client_secret=GOOGLE_CLIENT_SECRET,
+        scope=["openid", "email", "profile"],
+        redirect_to="auth.callback",
+    )
 
 google_bp = create_google_blueprint()
 
-@auth_bp.route("/login")
+@auth_bp.get("/login", summary="Iniciar sesión con Google",
+    description="Redirige al flujo de autenticación de Google OAuth.",
+    responses={302: None})
 def login():
-	"""Inicia el flujo de login con Google."""
-	return redirect(url_for("google.login"))
+    return redirect(url_for("google.login"))
 
-@auth_bp.route("/callback")
+@auth_bp.get("/callback", summary="Callback de Google OAuth",
+    description="Google redirige aquí tras autorizar. Genera y retorna el JWT.",
+    responses={200: TokenResponse, 401: ErrorResponse, 500: ErrorResponse})
 def callback():
-	"""
-	Callback después de que Google autoriza.
-	Obtiene datos del usuario, crea/actualiza en BD, genera JWT.
-	"""
-	# Verificar que se autenticó correctamente
-	if not google.authorized:
-		return jsonify({
-			"error": "unauthorized",
-			"message": "Not authorized with Google"
-		}), 401
-	
-	try:
-		# Obtener información del usuario desde Google
-		resp = google.get("/oauth2/v2/userinfo")
-		if not resp.ok:
-			raise Exception("Failed to fetch user info from Google")
-		
-		google_user = resp.json()
-		email = google_user.get("email")
-		name = google_user.get("name")
-		picture = google_user.get("picture")
-		
-		# Validar que el email esté verificado
-		if not google_user.get("verified_email"):
-			return jsonify({
-				"error": "unauthorized",
-				"message": "Email not verified by Google"
-			}), 401
-		
-		# Crear o actualizar usuario (servicio de auth)
-		user = AuthService.get_or_create_user(
-			db.session,
-			{
-				"email": email,
-				"name": name,
-				"picture": picture,
-			},
-		)
+    if not google.authorized:
+        return {"error": "UNAUTHORIZED", "message": "No autorizado con Google."}, 401
+    try:
+        resp = google.get("/oauth2/v2/userinfo")
+        if not resp.ok:
+            raise Exception("No se pudo obtener información del usuario desde Google.")
+        google_user = resp.json()
+        if not google_user.get("verified_email"):
+            return {"error": "UNAUTHORIZED", "message": "Email no verificado por Google."}, 401
+        user = AuthService.get_or_create_user(
+            db.session,
+            {
+                "email": google_user.get("email"),
+                "name": google_user.get("name"),
+                "picture": google_user.get("picture"),
+            },
+        )
+        token_data = AuthService.generate_jwt(user.id, user.email)
+        return token_data, 200
+    except Exception as e:
+        return {"error": "AUTH_ERROR", "message": str(e)}, 500
 
-		# Generar JWT con servicio centralizado
-		token_data = AuthService.generate_jwt(user.id, user.email)
-		
-		return jsonify(token_data), 200
-	
-	except Exception as e:
-		return jsonify({
-			"error": "auth_error",
-			"message": str(e)
-		}), 500
-
-@auth_bp.route("/me")
+@auth_bp.get("/me", summary="Obtener usuario autenticado",
+    description="Retorna la información del usuario dueño del JWT.",
+    responses={200: UserInfoResponse, 401: ErrorResponse},
+    security=[{"BearerAuth": []}])
 @require_jwt
 def get_current_user():
-	"""
-	Obtiene información del usuario autenticado.
-	Requiere JWT válido en header Authorization.
-	"""
-	user = request.current_user
-	return jsonify({
-		"id": user.id,
-		"email": user.email,
-		"name": user.name,
-		"picture": user.picture
-	}), 200
+    user = request.current_user
+    return {
+        "id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "picture": user.picture,
+    }, 200

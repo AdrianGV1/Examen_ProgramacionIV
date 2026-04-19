@@ -51,19 +51,16 @@ def create_app():
     # Registrar blueprints
     # ========================
     from app.routers.auth_router import auth_bp, google_bp
-    from app.routers.records import records_bp
+    from app.routers.records_router import records_bp
     from app.routers.upload_router import uploads_bp
     from app.routers.users import users_bp
 
     # Registrar auth blueprint en /auth
-    app.register_blueprint(auth_bp)
-
-    # Registrar google blueprint de Flask-Dance en /auth/google
+    app.register_api(auth_bp)                                    
     app.register_blueprint(google_bp, url_prefix="/auth")
-
-    # Registrar otros blueprints bajo /api/v1 con su subruta propia
-    app.register_blueprint(records_bp, url_prefix="/api/v1/records")
+    app.register_api(records_bp)                                
     app.register_api(uploads_bp, url_prefix="/api/v1/uploads")
     app.register_blueprint(users_bp, url_prefix="/api/v1/users")
+
 
     return app
