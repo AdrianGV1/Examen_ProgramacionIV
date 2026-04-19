@@ -56,11 +56,11 @@ def create_app():
     from app.routers.users import users_bp
 
     # Registrar auth blueprint en /auth
-    app.register_api(auth_bp)                                    
+    app.register_api(auth_bp)
     app.register_blueprint(google_bp, url_prefix="/auth")
-    app.register_api(records_bp)                                
-    app.register_api(uploads_bp, url_prefix="/api/v1/uploads")
-    app.register_blueprint(users_bp, url_prefix="/api/v1/users")
+    app.register_api(records_bp)
+    app.register_api(uploads_bp)
+    app.register_api(users_bp)
 
 
     return app

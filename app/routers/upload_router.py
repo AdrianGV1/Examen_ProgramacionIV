@@ -8,7 +8,7 @@ from app.schemas.upload import UploadResponse, UploadDeleteResponse
 from app.services.upload_service import UploadService, UploadServiceError
 
 
-uploads_bp = APIBlueprint("uploads", __name__, url_prefix="/uploads")
+uploads_bp = APIBlueprint("uploads", __name__, url_prefix="/api/v1/uploads")
 
 
 @uploads_bp.post(
