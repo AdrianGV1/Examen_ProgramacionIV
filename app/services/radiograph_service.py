@@ -4,6 +4,7 @@ from math import ceil
 from werkzeug.exceptions import NotFound
 
 from app.repositories.radiograph_repository import RadiographRepository
+from app.services.upload_service import UploadService
 from app.schemas.radiograph import (
 	RadiographCreate,
 	RadiographListResponse,
@@ -46,6 +47,14 @@ class RadiographService:
 
 		create_data = payload.model_dump(exclude_unset=True)
 		create_data = RadiographService._normalize_image_visibility(create_data)
+
+		# Si se crea como privada, asegurar que Cloudinary quede en modo authenticated.
+		if create_data.get("image_is_private") is True:
+			public_id = create_data.get("image_public_id")
+			if not public_id:
+				raise ValueError("image_public_id es requerido para marcar la imagen como privada")
+			UploadService.make_image_private(public_id)
+
 		record = RadiographRepository.create(db, create_data)
 		return RadiographResponse.model_validate(record)
 
@@ -99,10 +108,19 @@ class RadiographService:
 	def update_record(db, record_id: int, payload: RadiographUpdate) -> RadiographResponse:
 		update_data = payload.model_dump(exclude_unset=True)
 		update_data = RadiographService._normalize_image_visibility(update_data)
-		record = RadiographRepository.update(db, record_id, update_data)
+
+		record = RadiographRepository.get_by_id(db, record_id)
 		if record is None:
 			raise NotFound(description="Radiograph record not found")
 
+		# Si se marca como privada, asegurar que Cloudinary quede en modo authenticated.
+		if update_data.get("image_is_private") is True:
+			public_id = update_data.get("image_public_id") or record.image_public_id
+			if not public_id:
+				raise ValueError("image_public_id es requerido para marcar la imagen como privada")
+			UploadService.make_image_private(public_id)
+
+		record = RadiographRepository.update(db, record_id, update_data)
 		return RadiographResponse.model_validate(record)
 
 	@staticmethod

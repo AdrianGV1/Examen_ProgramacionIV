@@ -11,7 +11,7 @@ Endpoints:
 
 from datetime import date
 
-from flask import request
+from flask import current_app, request
 from flask_openapi3 import APIBlueprint, Tag
 from pydantic import BaseModel, Field, ValidationError
 from werkzeug.exceptions import NotFound
@@ -108,6 +108,8 @@ def create_record(body: RadiographCreate):
         return {"error": "VALIDATION_ERROR", "message": "Datos inválidos", "details": exc.errors()}, 400
     except ValueError as exc:
         return {"error": "BAD_REQUEST", "message": str(exc)}, 400
+    except UploadServiceError as exc:
+        return {"error": exc.code, "message": exc.message}, exc.status_code
     except Exception:
         return {"error": "INTERNAL_ERROR", "message": "Error interno del servidor"}, 500
 
@@ -211,7 +213,10 @@ def update_record(path: RecordPath, body: RadiographUpdate):
         return {"error": "NOT_FOUND", "message": exc.description}, 404
     except ValueError as exc:
         return {"error": "BAD_REQUEST", "message": str(exc)}, 400
-    except Exception:
+    except UploadServiceError as exc:
+        return {"error": exc.code, "message": exc.message}, exc.status_code
+    except Exception as exc:
+        current_app.logger.exception("update_record failed: %s", exc)
         return {"error": "INTERNAL_ERROR", "message": "Error interno del servidor"}, 500
 
 
