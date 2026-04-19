@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+from os.path import splitext
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import cloudinary
 import cloudinary.uploader
+import cloudinary.utils
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
@@ -158,3 +162,109 @@ class UploadService:
 			) from exc
 
 		return result.get("result") == "ok"
+
+	@classmethod
+	def make_image_private(cls, public_id: str) -> None:
+		if not public_id or not public_id.strip():
+			raise UploadServiceError(
+				code=ErrorCodes.VALIDATION_ERROR,
+				message="public_id es requerido",
+				status_code=400,
+			)
+
+		cls._configure_cloudinary()
+
+		try:
+			cloudinary.uploader.explicit(
+				public_id.strip(),
+				resource_type="image",
+				type="upload",
+				access_mode="authenticated",
+			)
+		except Exception as exc:
+			raise UploadServiceError(
+				code=ErrorCodes.INTERNAL_ERROR,
+				message="No se pudo marcar la imagen como privada en Cloudinary",
+				status_code=502,
+			) from exc
+
+	@staticmethod
+	def _infer_format_from_image_url(image_url: str | None) -> str:
+		if not image_url:
+			return "png"
+
+		try:
+			parsed = urlparse(image_url)
+			ext = splitext(parsed.path)[1].lower().lstrip(".")
+			if ext:
+				return ext
+		except Exception:
+			pass
+
+		return "png"
+
+	@staticmethod
+	def _append_query_param(url: str, key: str, value: str) -> str:
+		parsed = urlparse(url)
+		query_items = parse_qsl(parsed.query, keep_blank_values=True)
+		query_items.append((key, value))
+		new_query = urlencode(query_items)
+		return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
+
+	@classmethod
+	def generate_temporary_signed_url(
+		cls,
+		public_id: str,
+		expires_minutes: int,
+		user_access_token: str,
+		image_url: str | None = None,
+	) -> dict:
+		if not public_id or not public_id.strip():
+			raise UploadServiceError(
+				code=ErrorCodes.VALIDATION_ERROR,
+				message="public_id es requerido",
+				status_code=400,
+			)
+
+		if expires_minutes < 1 or expires_minutes > 60:
+			raise UploadServiceError(
+				code=ErrorCodes.VALIDATION_ERROR,
+				message="expires_minutes debe estar entre 1 y 60",
+				status_code=400,
+			)
+
+		if not user_access_token or not user_access_token.strip():
+			raise UploadServiceError(
+				code=ErrorCodes.VALIDATION_ERROR,
+				message="user_access_token es requerido",
+				status_code=400,
+			)
+
+		cls._configure_cloudinary()
+
+		expires_at_dt = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
+		expires_at_unix = int(expires_at_dt.timestamp())
+		file_format = cls._infer_format_from_image_url(image_url)
+
+		try:
+			signed_url = cloudinary.utils.private_download_url(
+				public_id.strip(),
+				file_format,
+				resource_type="image",
+				type="upload",
+				expires_at=expires_at_unix,
+			)
+		except Exception as exc:
+			raise UploadServiceError(
+				code=ErrorCodes.INTERNAL_ERROR,
+				message="No se pudo generar URL firmada temporal",
+				status_code=502,
+			) from exc
+
+		signed_url = cls._append_query_param(signed_url, "user_token", user_access_token)
+
+		return {
+			"signed_url": signed_url,
+			"expires_at": expires_at_dt,
+			"expires_in_seconds": int(expires_minutes * 60),
+		}

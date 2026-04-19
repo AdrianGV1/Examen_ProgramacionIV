@@ -7,7 +7,7 @@ from .radiograph import (
     RadiographResponse,
     RadiographUpdate,
 )
-from .upload import UploadDeleteResponse, UploadResponse
+from .upload import UploadDeleteResponse, UploadResponse, SignedImageAccessResponse
 from .user import UserCreate, UserListResponse, UserResponse, UserUpdate
 
 __all__ = [
@@ -24,6 +24,7 @@ __all__ = [
     "RadiographListResponse",
     "UploadResponse",
     "UploadDeleteResponse",
+    "SignedImageAccessResponse",
     "ErrorResponse",
     "ErrorDetail",
     "ErrorCodes",

@@ -83,3 +83,18 @@ class RadiographRepository:
 		db.delete(record)
 		db.commit()
 		return True
+
+	@staticmethod
+	def list_public_images_for_daily_hide(db) -> list[Radiograph]:
+		return (
+			db.query(Radiograph)
+			.filter(Radiograph.image_is_private.is_(False))
+			.filter(Radiograph.image_public_id.isnot(None))
+			.filter(Radiograph.image_public_id != "")
+			.all()
+		)
+
+	@staticmethod
+	def mark_image_hidden(record: Radiograph, hidden_at) -> None:
+		record.image_is_private = True
+		record.image_hidden_at = hidden_at

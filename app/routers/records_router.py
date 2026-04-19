@@ -17,9 +17,13 @@ from pydantic import BaseModel, Field, ValidationError
 from werkzeug.exceptions import NotFound
 
 from app.extensions import db as db_ext
+from app import config
 from app.schemas.radiograph import RadiographCreate, RadiographUpdate, RadiographResponse, RadiographListResponse
+from app.schemas.upload import SignedImageAccessResponse
 from app.schemas.errors import ErrorResponse
+from app.services.image_access_service import ImageAccessService
 from app.services.radiograph_service import RadiographService
+from app.services.upload_service import UploadService, UploadServiceError
 from app.utils.auth_decorators import require_jwt
 
 
@@ -48,6 +52,16 @@ class RecordsQueryParams(BaseModel):
 
 class RecordPath(BaseModel):
     record_id: int = Field(..., description="ID del registro radiográfico.", example=1)
+
+
+class SignedImageQueryParams(BaseModel):
+    expires_minutes: int = Field(
+        default=config.SIGNED_IMAGE_URL_EXPIRES_MINUTES,
+        ge=1,
+        le=60,
+        description="Minutos de vigencia de la URL firmada (1-60).",
+        example=10,
+    )
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -219,5 +233,74 @@ def delete_record(path: RecordPath):
         return {"deleted": True}, 200
     except NotFound as exc:
         return {"error": "NOT_FOUND", "message": exc.description}, 404
+    except Exception:
+        return {"error": "INTERNAL_ERROR", "message": "Error interno del servidor"}, 500
+
+
+@records_bp.get(
+    "/<int:record_id>/signed-image-url",
+    summary="Obtener URL firmada temporal para imagen oculta",
+    description=(
+        "Genera una URL firmada temporal y un token adicional por usuario para acceder "
+        "a una imagen marcada como privada."
+    ),
+    responses={
+        200: SignedImageAccessResponse,
+        400: ErrorResponse,
+        401: ErrorResponse,
+        404: ErrorResponse,
+        502: ErrorResponse,
+    },
+)
+@require_jwt
+def get_signed_image_url(path: RecordPath, query: SignedImageQueryParams):
+    try:
+        record = RadiographService.get_record(get_db(), path.record_id)
+
+        if not record.image_is_private:
+            return {
+                "error": "BAD_REQUEST",
+                "message": "La imagen no está oculta; no requiere URL firmada",
+            }, 400
+
+        if not record.image_public_id:
+            return {
+                "error": "BAD_REQUEST",
+                "message": "El registro no tiene image_public_id para firmar acceso",
+            }, 400
+
+        expires_minutes = int(request.args.get("expires_minutes", config.SIGNED_IMAGE_URL_EXPIRES_MINUTES))
+        if expires_minutes < 1 or expires_minutes > 60:
+            raise ValueError("expires_minutes debe estar entre 1 y 60")
+
+        current_user = request.current_user
+        token_data = ImageAccessService.generate_user_access_token(
+            user_id=current_user.id,
+            record_id=record.id,
+            public_id=record.image_public_id,
+            expires_minutes=expires_minutes,
+        )
+
+        signed_data = UploadService.generate_temporary_signed_url(
+            public_id=record.image_public_id,
+            expires_minutes=expires_minutes,
+            user_access_token=token_data["token"],
+            image_url=record.image_url,
+        )
+
+        payload = SignedImageAccessResponse(
+            record_id=record.id,
+            signed_url=signed_data["signed_url"],
+            access_token=token_data["token"],
+            expires_at=signed_data["expires_at"],
+            expires_in_seconds=signed_data["expires_in_seconds"],
+        )
+        return payload.model_dump(mode="json"), 200
+    except ValueError as exc:
+        return {"error": "BAD_REQUEST", "message": str(exc)}, 400
+    except NotFound as exc:
+        return {"error": "NOT_FOUND", "message": exc.description}, 404
+    except UploadServiceError as exc:
+        return {"error": exc.code, "message": exc.message}, exc.status_code
     except Exception:
         return {"error": "INTERNAL_ERROR", "message": "Error interno del servidor"}, 500

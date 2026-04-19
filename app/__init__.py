@@ -62,5 +62,9 @@ def create_app():
     app.register_api(uploads_bp)
     app.register_api(users_bp)
 
+    from app.services.daily_hide_job_service import init_daily_hide_scheduler
+
+    init_daily_hide_scheduler(app)
+
 
     return app

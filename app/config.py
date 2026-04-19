@@ -49,3 +49,20 @@ UPLOAD_ALLOWED_EXTENSIONS = {
 	for ext in os.getenv("UPLOAD_ALLOWED_EXTENSIONS", _default_ext).split(",")
 	if ext.strip()
 }
+
+# ========================
+# Job Diario de Ocultamiento
+# ========================
+IMAGE_HIDE_HOUR = int(os.getenv("IMAGE_HIDE_HOUR", "23"))
+IMAGE_HIDE_MINUTE = int(os.getenv("IMAGE_HIDE_MINUTE", "59"))
+IMAGE_HIDE_TIMEZONE = os.getenv("IMAGE_HIDE_TIMEZONE", "America/Costa_Rica")
+ENABLE_DAILY_HIDE_SCHEDULER = os.getenv("ENABLE_DAILY_HIDE_SCHEDULER", "true").lower() == "true"
+DAILY_HIDE_SCHEDULER_LOCK_FILE = os.getenv(
+	"DAILY_HIDE_SCHEDULER_LOCK_FILE",
+	".daily_hide_scheduler.lock",
+)
+
+# ========================
+# Acceso temporal a imágenes ocultas
+# ========================
+SIGNED_IMAGE_URL_EXPIRES_MINUTES = int(os.getenv("SIGNED_IMAGE_URL_EXPIRES_MINUTES", "10"))
