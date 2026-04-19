@@ -3,10 +3,13 @@ from flask_openapi3 import APIBlueprint
 from app.utils.auth_decorators import require_jwt
 
 from app.config_swagger import TAG_UPLOADS
-from app.schemas.errors import ErrorCodes
-from app.schemas.upload import UploadResponse, UploadDeleteResponse
+from app.schemas.errors import ErrorCodes, ErrorResponse
+from app.schemas.upload import UploadResponse, UploadDeleteResponse, SignedImageAccessResponse
 from app.services.upload_service import UploadService, UploadServiceError
+from pydantic import BaseModel, Field
 
+class RecordPath(BaseModel):
+    record_id: int = Field(..., description="ID del registro radiográfico.", example=12)
 
 uploads_bp = APIBlueprint("uploads", __name__, url_prefix="/api/v1/uploads")
 
@@ -95,3 +98,32 @@ def delete_image(public_id: str | None = None):
             ),
             500,
         )
+
+@uploads_bp.get(
+    "/<int:record_id>/signed",
+    responses={
+        200: SignedImageAccessResponse,
+        401: ErrorResponse,
+        403: ErrorResponse,
+        404: ErrorResponse,
+    },
+    summary="Obtener URL firmada para imagen protegida",
+    description="Genera una URL temporal para acceder a una imagen radiográfica que ya fue ocultada. ",
+    tags=[TAG_UPLOADS],
+    security=[{"BearerAuth": []}],
+)
+@require_jwt
+def get_signed_image_url(path: RecordPath):
+    """Genera una URL firmada temporal para acceder a una imagen protegida."""
+    try:
+        user = request.current_user
+        result = UploadService.get_signed_url(path.record_id, user)
+        return jsonify(result.model_dump(mode="json")), 200
+    except UploadServiceError as exc:
+        return jsonify({"error": exc.code, "message": exc.message}), exc.status_code
+    except Exception:
+        return jsonify({
+            "error": ErrorCodes.INTERNAL_ERROR,
+            "message": "Error interno del servidor",
+        }), 500
+        
