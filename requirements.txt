@@ -6,6 +6,7 @@ python-dotenv==1.2.2
 pydantic[email]
 flask-migrate
 flask-openapi3
+flask-openapi3[swagger]
 cloudinary
 google-auth
 google-auth-httplib2
@@ -14,5 +15,6 @@ PyJWT==2.12.1
 Flask-Dance==7.1.0
 requests==2.33.1
 requests-oauthlib==2.0.0
+
 APScheduler==3.10.4
 gunicorn
