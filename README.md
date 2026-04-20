@@ -60,7 +60,8 @@ python run.py
 Servidor local: http://127.0.0.1:5000
 
 ## Swagger
-Documentacion: http://127.0.0.1:5000/openapi/
+Documentacion local: http://127.0.0.1:5000/openapi/
+Documentacion produccion: https://examen-programacioniv.onrender.com/openapi/
 
 ## Endpoints principales
 
