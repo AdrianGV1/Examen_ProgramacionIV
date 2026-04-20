@@ -1,5 +1,7 @@
 # Examen_ProgramacionIV - API de placas radiograficas
 
+Base URL (para las peticiones): https://examen-programacioniv.onrender.com
+
 ## Requisitos
 - Python 3.11+
 - SQLite
